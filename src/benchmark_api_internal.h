@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 
+#include "commandlineflags.h"
+#include "console_reporter.h"
+
 namespace benchmark {
 namespace internal {
 
