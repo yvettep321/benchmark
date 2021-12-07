@@ -34,7 +34,7 @@ class EventQueue : public std::queue<std::string> {
   }
 };
 
-static EventQueue* queue = new EventQueue;
+EventQueue* queue = new EventQueue();
 
 class NullReporter : public BenchmarkReporter {
  public:
@@ -60,7 +60,7 @@ class BenchmarkTest : public testing::Test {
   }
 };
 
-static void BM_Match1(benchmark::State& state) {
+void BM_Match1(benchmark::State& state) {
   const int64_t arg = state.range(0);
 
   for (auto _ : state) {
@@ -111,8 +111,8 @@ TEST_F(BenchmarkTest, Match1WithRandomInterleaving) {
     std::vector<std::string> interleaving;
     interleaving.push_back(queue->Get());
     interleaving.push_back(queue->Get());
-    element_count[interleaving[0].c_str()]++;
-    element_count[interleaving[1].c_str()]++;
+    element_count[interleaving[0]]++;
+    element_count[interleaving[1]]++;
     interleaving_count[StrFormat("%s,%s", interleaving[0].c_str(),
                                  interleaving[1].c_str())]++;
   }
