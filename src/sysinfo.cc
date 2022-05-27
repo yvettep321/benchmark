@@ -346,6 +346,7 @@ std::vector<CPUInfo::CacheInfo> GetCacheSizesWindows() {
     C.num_sharing = static_cast<int>(B.count());
     C.level = Cache->Level;
     C.size = Cache->Size;
+    C.type = "Unknown";
     switch (Cache->Type) {
       case CacheUnified:
         C.type = "Unified";
@@ -358,9 +359,6 @@ std::vector<CPUInfo::CacheInfo> GetCacheSizesWindows() {
         break;
       case CacheTrace:
         C.type = "Trace";
-        break;
-      default:
-        C.type = "Unknown";
         break;
     }
     res.push_back(C);
@@ -634,7 +632,7 @@ double GetCPUCyclesPerSecond(CPUInfo::Scaling scaling) {
   fprintf(stderr, "Unable to determine clock rate from sysctl: %s: %s\n",
           FreqStr, strerror(errno));
 
-#elif defined BENCHMARK_OS_WINDOWS
+#elif defined BENCHMARK_OS_WINDOWS_WIN32
   // In NT, read MHz from the registry. If we fail to do so or we're in win9x
   // then make a crude estimate.
   DWORD data, data_size = sizeof(data);
