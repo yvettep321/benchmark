@@ -53,10 +53,13 @@ namespace benchmark {
 
 namespace {
 // For non-dense Range, intermediate values are powers of kRangeMultiplier.
-static const int kRangeMultiplier = 8;
+static constexpr int kRangeMultiplier = 8;
+
 // The size of a benchmark family determines is the number of inputs to repeat
 // the benchmark on. If this is "large" then warn the user during configuration.
-static const size_t kMaxFamilySize = 100;
+static constexpr size_t kMaxFamilySize = 100;
+
+static constexpr char kDisabledPrefix[] = "DISABLED_";
 }  // end namespace
 
 namespace internal {
@@ -116,10 +119,10 @@ bool BenchmarkFamilies::FindBenchmarks(
   // Make regular expression out of command-line flag
   std::string error_msg;
   Regex re;
-  bool isNegativeFilter = false;
+  bool is_negative_filter = false;
   if (spec[0] == '-') {
     spec.replace(0, 1, "");
-    isNegativeFilter = true;
+    is_negative_filter = true;
   }
   if (!re.Init(spec, &error_msg)) {
     Err << "Could not compile benchmark re: " << error_msg << std::endl;
@@ -154,7 +157,8 @@ bool BenchmarkFamilies::FindBenchmarks(
           << " will be repeated at least " << family_size << " times.\n";
     }
     // reserve in the special case the regex ".", since we know the final
-    // family size.
+    // family size.  this doesn't take into account any disabled benchmarks
+    // so worst case we reserve more than we need.
     if (spec == ".") benchmarks->reserve(benchmarks->size() + family_size);
 
     for (auto const& args : family->args_) {
@@ -164,8 +168,9 @@ bool BenchmarkFamilies::FindBenchmarks(
                                    num_threads);
 
         const auto full_name = instance.name().str();
-        if ((re.Match(full_name) && !isNegativeFilter) ||
-            (!re.Match(full_name) && isNegativeFilter)) {
+        if (full_name.rfind(kDisabledPrefix, 0) != 0 &&
+            ((re.Match(full_name) && !is_negative_filter) ||
+             (!re.Match(full_name) && is_negative_filter))) {
           benchmarks->push_back(std::move(instance));
 
           ++per_family_instance_index;
@@ -206,6 +211,7 @@ Benchmark::Benchmark(const char* name)
       use_default_time_unit_(true),
       range_multiplier_(kRangeMultiplier),
       min_time_(0),
+      min_warmup_time_(0),
       iterations_(0),
       repetitions_(0),
       measure_process_cpu_time_(false),
@@ -350,9 +356,17 @@ Benchmark* Benchmark::MinTime(double t) {
   return this;
 }
 
+Benchmark* Benchmark::MinWarmUpTime(double t) {
+  BM_CHECK(t >= 0.0);
+  BM_CHECK(iterations_ == 0);
+  min_warmup_time_ = t;
+  return this;
+}
+
 Benchmark* Benchmark::Iterations(IterationCount n) {
   BM_CHECK(n > 0);
   BM_CHECK(IsZero(min_time_));
+  BM_CHECK(IsZero(min_warmup_time_));
   iterations_ = n;
   return this;
 }

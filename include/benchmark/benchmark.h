@@ -308,6 +308,9 @@ BENCHMARK_EXPORT std::string GetBenchmarkFilter();
 // `benchmark::Initialize()` will override the flag's value.
 BENCHMARK_EXPORT void SetBenchmarkFilter(std::string value);
 
+// Returns the current value of --v (command line value for verbosity).
+BENCHMARK_EXPORT int32_t GetBenchmarkVerbosity();
+
 // Creates a default display reporter. Used by the library when no display
 // reporter is provided, but also made available for external use in case a
 // custom reporter should respect the `--benchmark_format` flag as a fallback
@@ -546,7 +549,7 @@ typedef std::map<std::string, Counter> UserCounters;
 // calculated automatically to the best fit.
 enum BigO { oNone, o1, oN, oNSquared, oNCubed, oLogN, oNLogN, oAuto, oLambda };
 
-typedef uint64_t IterationCount;
+typedef int64_t IterationCount;
 
 enum StatisticUnit { kTime, kPercentage };
 
@@ -1030,6 +1033,12 @@ class BENCHMARK_EXPORT Benchmark {
   // REQUIRES: `t > 0` and `Iterations` has not been called on this benchmark.
   Benchmark* MinTime(double t);
 
+  // Set the minimum amount of time to run the benchmark before taking runtimes
+  // of this benchmark into account. This
+  // option overrides the `benchmark_min_warmup_time` flag.
+  // REQUIRES: `t >= 0` and `Iterations` has not been called on this benchmark.
+  Benchmark* MinWarmUpTime(double t);
+
   // Specify the amount of iterations that should be run by this benchmark.
   // REQUIRES: 'n > 0' and `MinTime` has not been called on this benchmark.
   //
@@ -1142,6 +1151,7 @@ class BENCHMARK_EXPORT Benchmark {
 
   int range_multiplier_;
   double min_time_;
+  double min_warmup_time_;
   IterationCount iterations_;
   int repetitions_;
   bool measure_process_cpu_time_;
@@ -1536,6 +1546,7 @@ struct BENCHMARK_EXPORT BenchmarkName {
   std::string function_name;
   std::string args;
   std::string min_time;
+  std::string min_warmup_time;
   std::string iterations;
   std::string repetitions;
   std::string time_type;
